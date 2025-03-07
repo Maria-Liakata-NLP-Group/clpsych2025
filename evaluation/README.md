@@ -42,7 +42,7 @@ To evaluate all files in the submission directory on all tasks:
 ```
 python run.py
 ```
-Or for task-speciic evaluation:
+Or for task-specific evaluation:
 ```
 python run.py --tasks {your tasks}
 ```

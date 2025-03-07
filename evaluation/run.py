@@ -64,8 +64,6 @@ def score_submission(
 
     timeline_to_results = dict()
 
-    # ss, ws, nli = load_scorers(do_A1=do_A1, do_A2=do_A2, do_B=do_B, do_C=do_C)
-
     for timeline_id, gold_datum in tqdm(gold_data.items()):
 
         curr_results = []
