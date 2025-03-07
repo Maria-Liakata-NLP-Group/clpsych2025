@@ -50,4 +50,7 @@ for example:
 ```
 python run.py --test --tasks A1 B
 ```
-Results will be displayed on the terminal and saved as a CSV under `results/`.
+Results will be displayed on the terminal and saved as a CSV under `results/`, e.g:
+![Screenshot 2025-03-07 at 16 21 56](https://github.com/user-attachments/assets/45f3916d-c1b6-4b30-99bb-78c21bef9185)
+
+
