@@ -206,15 +206,20 @@ def score_submission(
 def main(args):
 
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    submission_pattern = f"{args.team}*.json"
 
     if args.test:
-        submission_data_paths = glob.glob(os.path.join(TEST_SUBMISSIONS_DIR, "*.json"))
+        submission_data_paths = glob.glob(
+            os.path.join(TEST_SUBMISSIONS_DIR, submission_pattern)
+        )
         gold_filename = TEST_ANNOTATED_FILENAME
         evaluation_results_path = os.path.join(
             RESULTS_DIR, f"results_test_{timestamp}.csv"
         )
     else:
-        submission_data_paths = glob.glob(os.path.join(DEV_SUBMISSIONS_DIR, "*.json"))
+        submission_data_paths = glob.glob(
+            os.path.join(DEV_SUBMISSIONS_DIR, submission_pattern)
+        )
         gold_filename = DEV_ANNOTATED_FILENAME
         evaluation_results_path = os.path.join(
             RESULTS_DIR, f"results_dev_{timestamp}.csv"
@@ -224,7 +229,7 @@ def main(args):
         logging.error(f"No submission files found in {submission_data_paths}")
         exit()
 
-    with open(os.path.join(DATA_DIR, gold_filename), "r") as f:
+    with open(os.path.join(DATA_DIR, gold_filename), "r", encoding="utf-8") as f:
         gold_data = json.load(f)
 
     do_A1, do_A2, do_B, do_C = get_active_tasks(args.tasks)
@@ -234,7 +239,7 @@ def main(args):
         team_name, submission_id = parse_filename(submission_data_path)
         logger.info(f"Processing {Path(submission_data_path).name}")
 
-        with open(submission_data_path, "r") as f:
+        with open(submission_data_path, "r", encoding="utf-8") as f:
             submission_data = json.load(f)
 
         for timeline_id, timeline_results in score_submission(
@@ -269,6 +274,12 @@ if __name__ == "__main__":
         "--test",
         action="store_true",
         help="If True, run on test split. If False, run on dev split (assumes specified in config and processed).",
+    )
+    parser.add_argument(
+        "--team",
+        type=str,
+        default="*",
+        help="An optional pattern to evaluate only on selected files.",
     )
     parser.add_argument(
         "--tasks",
