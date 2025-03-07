@@ -179,12 +179,9 @@ def score_submission(
 
         # Task C
         if do_C:
+            timeline_summary = submission_data[timeline_id]["timeline_level"]["summary"]
             predicted_summary_sents_timeline = [
-                s.strip()
-                for s in sent_tokenize(
-                    submission_data[timeline_id]["timeline_level"]["summary"]
-                )
-                if s.strip()
+                s.strip() for s in sent_tokenize(timeline_summary) if s.strip()
             ]
             gold_summary_sents_timeline = gold_datum["timeline_level"]["summary_sents"]
 
