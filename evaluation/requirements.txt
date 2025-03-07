@@ -1,8 +1,8 @@
-nltk
-tqdm
-pandas
+nltk==3.9.1
+tqdm==4.67.1
+pandas==2.2.3
 torch
-transformers
-numpy
-bert-score
-scikit-learn
+transformers==4.49.0
+numpy==2.0.2
+bert-score==0.3.13
+scikit-learn==1.6.1
