@@ -1,3 +1,9 @@
+# Project-specific
+data/
+submissions/
+submissions_dev/
+results/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
