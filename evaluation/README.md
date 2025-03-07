@@ -28,10 +28,12 @@ python submission_validator.py -f {path_to_your_json_submission}
 ```
 
 If the file content and structure is as expected, the output will look like this:
+![Screenshot 2025-03-07 at 15 29 17](https://github.com/user-attachments/assets/d5396c35-6b9b-4512-9abe-9279810f507c)
 
-And if there are errors, they will be displayed as such:
+And if there are errors, they will be displayed, e.g.:
+![Screenshot 2025-03-07 at 15 29 41](https://github.com/user-attachments/assets/48ddfa25-ba8a-4dc4-867a-79115d0132c9)
 
-
+![Screenshot 2025-03-07 at 15 30 01](https://github.com/user-attachments/assets/03ff29bb-72f2-4d3a-83ba-ef4a97edf05a)
 
 
 ## Evaluation
