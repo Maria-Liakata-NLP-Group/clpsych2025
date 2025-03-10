@@ -2,6 +2,15 @@
 
 This repository contains scripts to run evaluation on CLPsych 2025 shared task submissions.
 
+> [!NOTE]
+> If you are primarily interested in **validating your submission file**:
+> * Clone this repository
+> * Set the config.py, focusing on setting `TEST_DIR` to where the test files are stored on your system
+> * Run `python submission_validator.py -f {path_to_your_json_submission} `
+
+For detailed usage, please read on.
+
+
 # Setup
 Install required packages in a new environment.
 ```
