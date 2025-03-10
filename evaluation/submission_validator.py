@@ -6,7 +6,6 @@ including structure, field names, types, and timeline-post mappings.
 
 Requires there to be a mapping files created in data/ (see setup.sh).
 """
-
 import argparse
 import json
 import logging
@@ -26,12 +25,22 @@ class Validator:
         self.valid = True
         with open(TIMELINE_POST_MAPPING_PATH, "r") as f:
             if args.dev:
+                # Check that files exist in expected locations;
+                # otherwise it will affect timeline-post-mapping checks
+                if not DEV_TIMELINE_IDS:
+                    raise FileNotFoundError(
+                        "Unable to load dev timelines. Check config.py to see if paths are set correctly."
+                    )
                 self.timeline_id_to_post_ids = {
                     tlid: pids
                     for (tlid, pids) in json.load(f).items()
                     if tlid in DEV_TIMELINE_IDS
                 }
             else:
+                if not TEST_TIMELINE_IDS:
+                    raise FileNotFoundError(
+                        "Unable to load test timelines. Check config.py to see if paths are set correctly."
+                    )
                 self.timeline_id_to_post_ids = {
                     tlid: pids
                     for (tlid, pids) in json.load(f).items()

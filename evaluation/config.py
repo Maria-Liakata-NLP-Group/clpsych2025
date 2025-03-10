@@ -3,10 +3,16 @@ import glob
 from pathlib import Path
 
 # Directory containing annotated data
-TRAIN_DIR = "/import/nlp/datasets/clpsych2025/train/"
-TEST_DIR = "/import/nlp/datasets/clpsych2025/test/"
+TRAIN_DIR = (
+    # replace with file paths on your system
+    "/import/nlp/datasets/clpsych2025/train/"
+)
+TEST_DIR = (
+    # replace with file paths on your system
+    "/import/nlp/datasets/clpsych2025/test/"
+)
 
-# Randomly sampled timeline IDs from train for validation
+# Randomly sampled timeline IDs from train for validation - replace to validate on new train timelines
 DEV_TIMELINE_IDS = [
     "83997cd4e7",
     "46f4bb3ada",
