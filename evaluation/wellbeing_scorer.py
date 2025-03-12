@@ -13,6 +13,8 @@ class WellbeingScorer:
         # - Impaired functioning (1): scores 5-6
         # - Minimal impairment to functioning (2): scores > 6
         self.bins = {"serious": (1, 4), "impaired": (5, 6), "minimal": (7, 10)}
+        # For optional analyses as `classification'
+        self.incorrect_class = 3
 
     def check_and_process_wellbeing_scores(
         self, y_trues: ArrayLike, y_preds: ArrayLike, do_penalize: bool = True
@@ -126,3 +128,49 @@ class WellbeingScorer:
                     )
                 )
         return result
+
+    def compute_f1(
+        self, y_trues: ArrayLike, y_preds: ArrayLike, do_penalize: bool = True
+    ):
+        """
+        Compute F1 scores for binned wellbeing score predictions.
+
+        Args:
+            y_trues : Gold wellbeing scores
+            y_preds : Predicted wellbeing scores
+            do_penalize : If True, penalize incorrectly predicted Nones
+
+        Returns:
+            Dictionary containing macro F1 and class-wise F1 results
+        """
+        y_trues, y_preds, none_mask = self.check_and_process_wellbeing_scores(
+            y_trues=y_trues, y_preds=y_preds, do_penalize=do_penalize
+        )
+        y_trues = self.bin_wellbeing_score(y_trues)
+
+        # 1. No missing predictions
+        if not none_mask.any():
+            y_preds = self.bin_wellbeing_score(y_preds)
+        else:
+            # 2. Cast missing predictions into new label
+            y_preds[~none_mask] = self.bin_wellbeing_score(y_preds[~none_mask])
+            y_preds[none_mask] = self.incorrect_class
+
+        y_trues, y_preds = y_trues.astype(int), y_preds.astype(int)
+
+        result_macro = {
+            "f1_macro": {
+                "value": f1_score(
+                    y_trues, y_preds, average="macro", labels=self.labels
+                ),
+                "task": "A.2",
+            }
+        }
+        class_f1 = f1_score(y_trues, y_preds, average=None, labels=self.labels)
+        result_class = {
+            f"f1_class_{i}": {"value": class_f1[i], "task": "A.2"}
+            for i in range(len(class_f1))
+            if i != self.incorrect_class
+        }
+
+        return {**result_macro, **result_class}

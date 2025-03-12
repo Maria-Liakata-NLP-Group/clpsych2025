@@ -58,14 +58,20 @@ class NLIScorer:
                 contradict_scores
             )
             mean_consistency = 1 - contradict_scores.mean()
+            max_entailment = entail_scores.max()
             max_contradiction = contradict_scores.max()
         else:
             mean_consistency = 0.0
+            max_entailment = 0.0
             max_contradiction = 1.0
 
         return {
             f"{prefix}_mean_consistency_{source_name}": {
                 "value": mean_consistency,
+                "task": task,
+            },
+            f"{prefix}_max_entailment_{source_name}": {
+                "value": max_entailment,
                 "task": task,
             },
             f"{prefix}_max_contradiction_{source_name}": {
@@ -94,4 +100,16 @@ class NLIScorer:
             task="C",
             prefix="timeline",
             source_name="gold",
+        )
+
+    def compute_summary_nli_evidence(
+        self, evidence_spans: List[str], summary_sents: List[str]
+    ):
+        """Helper for optional exploratory metric - evidence appropriateness"""
+        return self.compute_nli_scores(
+            source_sents=evidence_spans,
+            predicted_sents=summary_sents,
+            task="B",
+            prefix="post",
+            source_name="evidence",
         )

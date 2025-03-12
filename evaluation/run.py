@@ -7,6 +7,7 @@ import argparse
 import glob
 from nltk import sent_tokenize
 import json
+import ast
 from collections import defaultdict
 from tqdm.auto import tqdm
 import logging
@@ -73,6 +74,9 @@ def score_submission(
         predicted_wellbeing_scores = []
         predicted_summary_sents = []
 
+        # Exploratory: spans from both categories that preserve post structure
+        predicted_spans = []
+
         # Get gold data
         post_ids = gold_datum["timeline_level"]["post_ids"]
         gold_spans_adaptive = [
@@ -84,16 +88,29 @@ def score_submission(
 
         for post_id in post_ids:
             # Get prediction per post with type conversion & null handling
+            adaptive_evidence = post_datum.get("adaptive_evidence", [])
+            if isinstance(adaptive_evidence, str):
+                adaptive_evidence = ast.literal_eval(adaptive_evidence)
+                if not isinstance(adaptive_evidence, list):
+                    adaptive_evidence = []
+            maladaptive_evidence = post_datum.get("maladaptive_evidence", [])
+            if isinstance(maladaptive_evidence, str):
+                maladaptive_evidence = ast.literal_eval(maladaptive_evidence)
+                if not isinstance(maladaptive_evidence, list):
+                    maladaptive_evidence = []
+
             post_datum = submission_data[timeline_id]["post_level"][post_id]
-            predicted_spans_adaptive.extend(post_datum.get("adaptive_evidence", []))
-            predicted_spans_maladaptive.extend(
-                post_datum.get("maladaptive_evidence", [])
-            )
+
+            predicted_spans_adaptive.extend(adaptive_evidence)
+            predicted_spans_maladaptive.extend(maladaptive_evidence)
+            # Exploratory: spans from both categories that preserve post structure
+            predicted_spans.append(adaptive_evidence + maladaptive_evidence)
+
             wellbeing_score = post_datum.get("wellbeing_score")
             if isinstance(wellbeing_score, str):
                 wellbeing_score = wellbeing_score.strip()
                 if wellbeing_score and wellbeing_score.isnumeric():
-                    wellbeing_score = int(wellbeing_score)
+                    wellbeing_score = float(wellbeing_score)
                 else:
                     wellbeing_score = None
             elif not (
@@ -123,7 +140,7 @@ def score_submission(
             curr_results.append(curr_result_adaptive)
             curr_results.append(curr_result_maladaptive)
 
-            # Store adaptive and maladaptive individually (treat as another metric)
+            # Optional: store adaptive and maladaptive individually (treat as another metric)
             curr_results.append(
                 {
                     metric_name + "_adaptive": v
@@ -148,7 +165,13 @@ def score_submission(
                 ws.compute_mse(
                     y_trues=gold_wellbeing_scores,
                     y_preds=predicted_wellbeing_scores,
-                    do_binwise=True,  # computes MSE per bin for optional analysis
+                    do_binwise=True,  # Optional: computes MSE per bin for optional analysis
+                )
+            )
+            # Optional: wellbeing as classification
+            curr_results.append(
+                ws.compute_f1(
+                    y_trues=gold_wellbeing_scores, y_preds=predicted_wellbeing_scores
                 )
             )
 
@@ -163,7 +186,8 @@ def score_submission(
             for (
                 curr_gold_summary_sents,
                 curr_predicted_summary_sents,
-            ) in zip(gold_summary_sents, predicted_summary_sents):
+                curr_evidence_spans,
+            ) in zip(gold_summary_sents, predicted_summary_sents, predicted_spans):
 
                 # Evaluate only if there is a non-empty gold summary
                 if curr_gold_summary_sents:
@@ -172,6 +196,14 @@ def score_submission(
                         nli.compute_post_nli_gold(
                             gold_sents=curr_gold_summary_sents,
                             predicted_sents=curr_predicted_summary_sents,
+                        )
+                    )
+
+                    # Optional: exploratory - assess post summary relative to evidence spans
+                    curr_results.append(
+                        nli.compute_summary_nli_evidence(
+                            evidence_spans=curr_evidence_spans,
+                            summary_sents=curr_predicted_summary_sents,
                         )
                     )
 
