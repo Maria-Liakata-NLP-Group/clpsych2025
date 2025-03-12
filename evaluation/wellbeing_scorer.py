@@ -15,6 +15,7 @@ class WellbeingScorer:
         self.bins = {"serious": (1, 4), "impaired": (5, 6), "minimal": (7, 10)}
         # For optional analyses as `classification'
         self.incorrect_class = 3
+        self.labels = np.array([0, 1, 2, 3])
 
     def check_and_process_wellbeing_scores(
         self, y_trues: ArrayLike, y_preds: ArrayLike, do_penalize: bool = True
