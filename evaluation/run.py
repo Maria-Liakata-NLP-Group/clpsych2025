@@ -92,13 +92,19 @@ def score_submission(
 
             adaptive_evidence = post_datum.get("adaptive_evidence", [])
             if isinstance(adaptive_evidence, str):
-                adaptive_evidence = ast.literal_eval(adaptive_evidence)
-                if not isinstance(adaptive_evidence, list):
+                try:
+                    adaptive_evidence = ast.literal_eval(adaptive_evidence)
+                    if not isinstance(adaptive_evidence, list):
+                        adaptive_evidence = []
+                except:
                     adaptive_evidence = []
             maladaptive_evidence = post_datum.get("maladaptive_evidence", [])
             if isinstance(maladaptive_evidence, str):
-                maladaptive_evidence = ast.literal_eval(maladaptive_evidence)
-                if not isinstance(maladaptive_evidence, list):
+                try:
+                    maladaptive_evidence = ast.literal_eval(maladaptive_evidence)
+                    if not isinstance(maladaptive_evidence, list):
+                        maladaptive_evidence = []
+                except:
                     maladaptive_evidence = []
 
             predicted_spans_adaptive.extend(adaptive_evidence)
