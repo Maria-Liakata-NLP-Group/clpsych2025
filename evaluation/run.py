@@ -88,6 +88,8 @@ def score_submission(
 
         for post_id in post_ids:
             # Get prediction per post with type conversion & null handling
+            post_datum = submission_data[timeline_id]["post_level"][post_id]
+
             adaptive_evidence = post_datum.get("adaptive_evidence", [])
             if isinstance(adaptive_evidence, str):
                 adaptive_evidence = ast.literal_eval(adaptive_evidence)
@@ -98,8 +100,6 @@ def score_submission(
                 maladaptive_evidence = ast.literal_eval(maladaptive_evidence)
                 if not isinstance(maladaptive_evidence, list):
                     maladaptive_evidence = []
-
-            post_datum = submission_data[timeline_id]["post_level"][post_id]
 
             predicted_spans_adaptive.extend(adaptive_evidence)
             predicted_spans_maladaptive.extend(maladaptive_evidence)
