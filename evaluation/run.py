@@ -199,13 +199,14 @@ def score_submission(
                         )
                     )
 
-                    # Optional: exploratory - assess post summary relative to evidence spans
-                    curr_results.append(
-                        nli.compute_summary_nli_evidence(
-                            evidence_spans=curr_evidence_spans,
-                            summary_sents=curr_predicted_summary_sents,
+                    if curr_evidence_spans and curr_predicted_summary_sents:
+                        # Optional: exploratory - assess post summary relative to evidence spans
+                        curr_results.append(
+                            nli.compute_summary_nli_evidence(
+                                evidence_spans=curr_evidence_spans,
+                                summary_sents=curr_predicted_summary_sents,
+                            )
                         )
-                    )
 
         # Task C
         if do_C:
