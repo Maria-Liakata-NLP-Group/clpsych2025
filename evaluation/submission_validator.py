@@ -360,12 +360,8 @@ class Validator:
         if "wellbeing_score" in post_data:
             score = post_data["wellbeing_score"]
             # If no score is predicted, it should be None
-            if score is None:
+            if score is None or isinstance(score, float):
                 return
-            if isinstance(score, float):
-                logger.warning(
-                    f"{context}: Well-being score is float. It will be truncated to int automatically during evaluation."
-                )
             elif not self.check_type(
                 score,
                 int,
