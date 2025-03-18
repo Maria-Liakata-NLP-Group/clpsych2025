@@ -316,16 +316,14 @@ def main(args):
             do_C=do_C,
         ).items():
             for curr_result in timeline_results:
-                for metric_name, metric_vals in curr_result.items():
-                    results["timeline_id"].append(timeline_id)
-                    results["metric"].append(metric_name)
-                    results["task"].append(metric_vals["task"])
-                    results["value"].append(metric_vals["value"])
-                    results["post_id"].append(metric_vals["post_id"])
-                    results["y"].append(metric_vals["y"])
-                    results["yhat"].append(metric_vals["yhat"])
-                    results["team_name"].append(team_name)
-                    results["submission_id"].append(submission_id)
+                results["timeline_id"].append(timeline_id)
+                results["task"].append(curr_result["task"])
+                results["value"].append(curr_result["value"])
+                results["post_id"].append(curr_result["post_id"])
+                results["y"].append(curr_result["y"])
+                results["yhat"].append(curr_result["yhat"])
+                results["team_name"].append(team_name)
+                results["submission_id"].append(submission_id)
 
     results_df = pd.DataFrame(results)
     results_df.to_csv(evaluation_results_path)
