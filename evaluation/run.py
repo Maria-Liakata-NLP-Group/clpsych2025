@@ -25,6 +25,7 @@ from config import (
     DEV_ANNOTATED_FILENAME,
     TEST_ANNOTATED_FILENAME,
 )
+import numpy as np
 
 logger = logging.getLogger("run")
 logging.basicConfig(level=logging.INFO)
@@ -143,77 +144,96 @@ def score_submission(
                 predicted_spans=predicted_spans_maladaptive,
             )
             # Main metric: store adaptive and maldaptive performance with equal weighting
-            curr_results.append(curr_result_adaptive)
-            curr_results.append(curr_result_maladaptive)
+            # we only care about this for the present analysis
+            curr_result_adaptive = curr_result_adaptive["bertscore_recall"]
+            curr_result_maladaptive = curr_result_maladaptive["bertscore_recall"]
 
-            # Optional: store adaptive and maladaptive individually (treat as another metric)
             curr_results.append(
                 {
-                    metric_name + "_adaptive": v
-                    for metric_name, v in curr_result_adaptive.items()
+                    "timeline_id": timeline_id,
+                    "post_id": None,
+                    "task": "A.1-both",
+                    "y": gold_spans_adaptive + gold_spans_maladaptive,
+                    "yhat": predicted_spans_adaptive + predicted_spans_maladaptive,
+                    "value": np.nanmean(
+                        [
+                            curr_result_adaptive["value"],
+                            curr_result_maladaptive["value"],
+                        ]
+                    ),
                 }
             )
+
             curr_results.append(
                 {
-                    metric_name + "_maladaptive": v
-                    for metric_name, v in curr_result_maladaptive.items()
+                    "timeline_id": timeline_id,
+                    "post_id": None,
+                    "task": "A.1-adaptive",
+                    "y": gold_spans_adaptive,
+                    "yhat": predicted_spans_adaptive,
+                    "value": curr_result_adaptive["value"],
+                }
+            )
+
+            curr_results.append(
+                {
+                    "timeline_id": timeline_id,
+                    "post_id": None,
+                    "task": "A.1-maladaptive",
+                    "y": gold_spans_maladaptive,
+                    "yhat": predicted_spans_maladaptive,
+                    "value": curr_result_maladaptive["value"],
                 }
             )
 
         # Task A.2
         if do_A2:
-            ws = WellbeingScorer()
-            gold_wellbeing_scores = [
-                gold_datum["post_level"][pid]["wellbeing_score"] for pid in post_ids
-            ]
-            # Main metric: MSE
-            curr_results.append(
-                ws.compute_mse(
-                    y_trues=gold_wellbeing_scores,
-                    y_preds=predicted_wellbeing_scores,
-                    do_binwise=True,  # Optional: computes MSE per bin for optional analysis
+            # we want the errors directly
+            for post_index, pid in enumerate(post_ids):
+                gold_score = gold_datum["post_level"][pid]["wellbeing_score"]
+                predicted_score = predicted_wellbeing_scores[post_index]
+                # we are less interested in abstaining from predictions
+                if gold_score is None or predicted_score is None:
+                    continue
+                curr_results.append(
+                    {
+                        "timeline_id": timeline_id,
+                        "post_id": pid,
+                        "task": "A.2",
+                        "y": gold_score,
+                        "yhat": predicted_score,
+                        "value": (gold_score - predicted_score) ** 2,  # squared error
+                    }
                 )
-            )
-            # Optional: wellbeing as classification
-            curr_results.append(
-                ws.compute_f1(
-                    y_trues=gold_wellbeing_scores, y_preds=predicted_wellbeing_scores
-                )
-            )
 
         if do_B or do_C:
             nli = NLIScorer()
 
         # Task B
         if do_B:
-            gold_summary_sents = [
-                gold_datum["post_level"][pid]["summary_sents"] for pid in post_ids
-            ]
-            for (
-                curr_gold_summary_sents,
-                curr_predicted_summary_sents,
-                curr_evidence_spans,
-            ) in zip(gold_summary_sents, predicted_summary_sents, predicted_spans):
-
+            for (curr_predicted_summary_sents, pid) in zip(
+                predicted_summary_sents, post_ids
+            ):
+                curr_gold_summary_sents = gold_datum["post_level"][pid]["summary_sents"]
                 # Evaluate only if there is a non-empty gold summary
                 if curr_gold_summary_sents:
                     # Main metric: mean consistency with gold summary
+                    # we skip exploratory metric
+                    curr_result = nli.compute_post_nli_gold(
+                        gold_sents=curr_gold_summary_sents,
+                        predicted_sents=curr_predicted_summary_sents,
+                    )["post_mean_consistency_gold"]["value"]
+
                     curr_results.append(
-                        nli.compute_post_nli_gold(
-                            gold_sents=curr_gold_summary_sents,
-                            predicted_sents=curr_predicted_summary_sents,
-                        )
+                        {
+                            "timeline_id": timeline_id,
+                            "post_id": pid,
+                            "task": "B",
+                            "y": ". ".join(curr_gold_summary_sents),
+                            "yhat": ". ".join(curr_predicted_summary_sents),
+                            "value": curr_result,
+                        }
                     )
-
-                    if curr_evidence_spans and curr_predicted_summary_sents:
-                        # Optional: exploratory - assess post summary relative to evidence spans
-                        curr_results.append(
-                            nli.compute_summary_nli_evidence(
-                                evidence_spans=curr_evidence_spans,
-                                summary_sents=curr_predicted_summary_sents,
-                            )
-                        )
-
         # Task C
         if do_C:
             timeline_summary = submission_data[timeline_id]["timeline_level"]["summary"]
@@ -227,12 +247,20 @@ def score_submission(
 
             # Evaluate only if there is a non-empty gold summary
             if gold_summary_sents_timeline:
+                curr_result = nli.compute_post_nli_gold(
+                    gold_sents=gold_summary_sents_timeline,
+                    predicted_sents=predicted_summary_sents_timeline,
+                )["timeline_mean_consistency_gold"]["value"]
                 # Main metric: mean consistency with gold summary
                 curr_results.append(
-                    nli.compute_timeline_nli_gold(
-                        gold_sents=gold_summary_sents_timeline,
-                        predicted_sents=predicted_summary_sents_timeline,
-                    )
+                    {
+                        "timeline_id": timeline_id,
+                        "post_id": None,
+                        "task": "C",
+                        "y": ". ".join(gold_summary_sents_timeline),
+                        "yhat": ". ".join(predicted_summary_sents_timeline),
+                        "value": curr_result,
+                    }
                 )
 
         timeline_to_results[timeline_id] = curr_results
@@ -293,16 +321,14 @@ def main(args):
                     results["metric"].append(metric_name)
                     results["task"].append(metric_vals["task"])
                     results["value"].append(metric_vals["value"])
+                    results["post_id"].append(metric_vals["post_id"])
+                    results["y"].append(metric_vals["y"])
+                    results["yhat"].append(metric_vals["yhat"])
                     results["team_name"].append(team_name)
                     results["submission_id"].append(submission_id)
 
     results_df = pd.DataFrame(results)
     results_df.to_csv(evaluation_results_path)
-    print(
-        results_df.groupby(
-            ["team_name", "submission_id", "task", "metric"]
-        ).value.mean()
-    )
 
 
 if __name__ == "__main__":

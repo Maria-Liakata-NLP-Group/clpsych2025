@@ -108,7 +108,9 @@ class WellbeingScorer:
 
         # 3. No empty prediction
         result = {
-            f"mse_{suffix}" if suffix else "mse": {
+            f"mse_{suffix}"
+            if suffix
+            else "mse": {
                 "task": "A.2",
                 "value": mean_squared_error(y_trues, y_preds),
             }
