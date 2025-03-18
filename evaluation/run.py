@@ -247,7 +247,7 @@ def score_submission(
 
             # Evaluate only if there is a non-empty gold summary
             if gold_summary_sents_timeline:
-                curr_result = nli.compute_post_nli_gold(
+                curr_result = nli.compute_timeline_nli_gold(
                     gold_sents=gold_summary_sents_timeline,
                     predicted_sents=predicted_summary_sents_timeline,
                 )["timeline_mean_consistency_gold"]["value"]
